@@ -2,8 +2,8 @@
 #include "driver/i2s.h"
 #include "driver/i2s_types.h"
 #include "esp_log.h"
+#include <cmath>
 #include <cstring>
-#include <math.h>
 
 #define BUFFER_SIZE 1024
 
@@ -17,6 +17,10 @@ Audio::Audio(const uint32_t bclk_pin, const uint32_t ws_pin, const uint32_t data
         (int32_t *)heap_caps_malloc(BUFFER_SIZE * sizeof(int32_t), MALLOC_CAP_DMA);
     if (!data_buffer_) {
         ESP_LOGE("AUDIO", "Failed to allocate DMA buffer");
+    }
+    dsp_buffer_ = (float *)heap_caps_malloc(BUFFER_SIZE * sizeof(float), MALLOC_CAP_DMA);
+    if (!dsp_buffer_) {
+        ESP_LOGE("AUDIO", "Failed to allocate DMA float buffer");
     }
 }
 
@@ -54,28 +58,87 @@ void Audio::init() {
              data_pin_);
 }
 
-size_t Audio::readSamples() const {
+float Audio::computeRMS(const size_t numSamples) const {
+    if (!data_buffer_ || numSamples == 0) {
+        return 0.0;
+    }
+    float sum = 0;
+    for (std::size_t i = 0; i < numSamples; i++) {
+        const float sample = data_buffer_[i] >> 8; // 24-bit mic in 32-bit int
+        sum += sample * sample;
+    }
+    return sqrt(sum / numSamples);
+}
+
+void Audio::highPassFilter(float *buffer, const std::size_t N,
+                           const float cutoffHz) const {
+    if (N == 0) {
+        return;
+    }
+    const float RC = 1.0f / (2.0f * M_PI * cutoffHz);
+    const float dt = 1.0f / static_cast<float>(sample_rate_);
+    const float alpha = RC / (RC + dt);
+    float prevX = buffer[0];
+    float prevY = 0.0f;
+    for (std::size_t i = 0; i < N; i++) {
+        const float x = buffer[i];
+        const float y = alpha * (prevY + x - prevX);
+        buffer[i] = y;
+        prevX = x;
+        prevY = y;
+    }
+}
+
+void Audio::lowPassFilter(float *buffer, const std::size_t N,
+                          const float cutoffHz) const {
+    if (N == 0) {
+        return;
+    }
+    const float RC = 1.0f / (2.0f * M_PI * cutoffHz);
+    const float dt = 1.0f / static_cast<float>(sample_rate_);
+    const float alpha = dt / (RC + dt);
+    float prevY = buffer[0];
+    for (std::size_t i = 0; i < N; i++) {
+        const float x = buffer[i];
+        const float y = alpha * x + (1.0f - alpha) * prevY;
+        buffer[i] = y;
+        prevY = y;
+    }
+}
+
+void Audio::applyHannWindow(float *buffer, const std::size_t N) const {
+    for (std::size_t i = 0; i < N; i++) {
+        const float w = 0.5f * (1.0f - cosf(2.0f * M_PI * i / (N - 1)));
+        buffer[i] *= w;
+    }
+}
+
+std::pair<size_t, const float *> Audio::readSamples() const {
     if (!data_buffer_ || BUFFER_SIZE == 0) {
-        return 0;
+        return {0, nullptr};
     }
     size_t bytesRead = 0;
     const esp_err_t err = i2s_read(I2S_NUM_0, data_buffer_, BUFFER_SIZE * sizeof(int32_t),
                                    &bytesRead, portMAX_DELAY);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "I2S read failed: %d", err);
-        return 0;
+        return {0, nullptr};
     }
-    return bytesRead / sizeof(int32_t);
-}
 
-double Audio::computeRMS(const size_t numSamples) const {
-    if (!data_buffer_ || numSamples == 0) {
-        return 0.0;
+    const std::size_t count = bytesRead / sizeof(int32_t);
+
+    // for (std::size_t i = 0; i < count; i++) {
+    //     dsp_buffer_[i] = static_cast<float>(data_buffer_[i]);
+    // }
+
+    constexpr float INT24_MAX = 8388608.0f; // 2^23
+    for (std::size_t i = 0; i < count; i++) {
+        dsp_buffer_[i] = static_cast<float>(data_buffer_[i] >> 8) / INT24_MAX;
     }
-    double sum = 0;
-    for (size_t i = 0; i < numSamples; i++) {
-        const double sample = data_buffer_[i] >> 8; // 24-bit mic in 32-bit int
-        sum += sample * sample;
-    }
-    return sqrt(sum / numSamples);
+
+    highPassFilter(dsp_buffer_, count);
+    lowPassFilter(dsp_buffer_, count);
+    applyHannWindow(dsp_buffer_, count);
+
+    return {count, dsp_buffer_};
 }
