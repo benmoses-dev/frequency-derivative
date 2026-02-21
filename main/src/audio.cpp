@@ -16,12 +16,13 @@ Audio::Audio(const uint32_t bclk_pin, const uint32_t ws_pin, const uint32_t data
     data_buffer_ =
         (int32_t *)heap_caps_malloc(BUFFER_SIZE * sizeof(int32_t), MALLOC_CAP_DMA);
     if (!data_buffer_) {
-        ESP_LOGE("AUDIO", "Failed to allocate DMA buffer");
+        ESP_LOGE(TAG, "Failed to allocate DMA buffer");
     }
     dsp_buffer_ = (float *)heap_caps_malloc(BUFFER_SIZE * sizeof(float), MALLOC_CAP_DMA);
     if (!dsp_buffer_) {
-        ESP_LOGE("AUDIO", "Failed to allocate DMA float buffer");
+        ESP_LOGE(TAG, "Failed to allocate DMA float buffer");
     }
+    dt = 1.0f / static_cast<float>(sample_rate_);
 }
 
 Audio::~Audio() { i2s_driver_uninstall(I2S_NUM_0); }
@@ -64,56 +65,62 @@ float Audio::computeRMS(const size_t numSamples) const {
     }
     float sum = 0;
     for (std::size_t i = 0; i < numSamples; i++) {
-        const float sample = data_buffer_[i] >> 8; // 24-bit mic in 32-bit int
+        const float sample = data_buffer_[i] >> 8;
         sum += sample * sample;
     }
-    return sqrt(sum / numSamples);
+    return sqrtf(sum / numSamples);
 }
 
-void Audio::highPassFilter(float *buffer, const std::size_t N,
-                           const float cutoffHz) const {
+void Audio::hpf(float *buffer, const std::size_t N, const float cutoffHz) const {
     if (N == 0) {
         return;
     }
-    const float RC = 1.0f / (2.0f * M_PI * cutoffHz);
-    const float dt = 1.0f / static_cast<float>(sample_rate_);
+    const float RC = 1.0f / (TAU * cutoffHz);
     const float alpha = RC / (RC + dt);
     float prevX = buffer[0];
     float prevY = 0.0f;
     for (std::size_t i = 0; i < N; i++) {
         const float x = buffer[i];
-        const float y = alpha * (prevY + x - prevX);
+        const float deltaX = x - prevX;
+        /**
+         * Smoothed derivative to attenuate the low frequency signals
+         */
+        const float y = alpha * (prevY + deltaX);
         buffer[i] = y;
         prevX = x;
         prevY = y;
     }
 }
 
-void Audio::lowPassFilter(float *buffer, const std::size_t N,
-                          const float cutoffHz) const {
+void Audio::lpf(float *buffer, const std::size_t N, const float cutoffHz) const {
     if (N == 0) {
         return;
     }
-    const float RC = 1.0f / (2.0f * M_PI * cutoffHz);
-    const float dt = 1.0f / static_cast<float>(sample_rate_);
+    const float RC = 1.0f / (TAU * cutoffHz);
     const float alpha = dt / (RC + dt);
     float prevY = buffer[0];
     for (std::size_t i = 0; i < N; i++) {
         const float x = buffer[i];
+        /**
+         * Exponential moving average
+         */
         const float y = alpha * x + (1.0f - alpha) * prevY;
         buffer[i] = y;
         prevY = y;
     }
 }
 
-void Audio::applyHannWindow(float *buffer, const std::size_t N) const {
+/**
+ * Hann window to taper the signal to reduce spectral leakage before FFT.
+ */
+void Audio::hann(float *buffer, const std::size_t N) const {
     for (std::size_t i = 0; i < N; i++) {
-        const float w = 0.5f * (1.0f - cosf(2.0f * M_PI * i / (N - 1)));
+        const float w = 0.5f * (1.0f - cosf(TAU * i / (N - 1)));
         buffer[i] *= w;
     }
 }
 
-std::pair<size_t, const float *> Audio::readSamples() const {
+std::pair<std::size_t, const float *> Audio::readSamples() const {
     if (!data_buffer_ || BUFFER_SIZE == 0) {
         return {0, nullptr};
     }
@@ -124,21 +131,13 @@ std::pair<size_t, const float *> Audio::readSamples() const {
         ESP_LOGE(TAG, "I2S read failed: %d", err);
         return {0, nullptr};
     }
-
     const std::size_t count = bytesRead / sizeof(int32_t);
-
-    // for (std::size_t i = 0; i < count; i++) {
-    //     dsp_buffer_[i] = static_cast<float>(data_buffer_[i]);
-    // }
-
     constexpr float INT24_MAX = 8388608.0f; // 2^23
     for (std::size_t i = 0; i < count; i++) {
         dsp_buffer_[i] = static_cast<float>(data_buffer_[i] >> 8) / INT24_MAX;
     }
-
-    highPassFilter(dsp_buffer_, count);
-    lowPassFilter(dsp_buffer_, count);
-    applyHannWindow(dsp_buffer_, count);
-
+    hpf(dsp_buffer_, count);
+    lpf(dsp_buffer_, count);
+    hann(dsp_buffer_, count);
     return {count, dsp_buffer_};
 }

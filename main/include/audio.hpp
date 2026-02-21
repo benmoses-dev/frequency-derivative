@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <utility>
@@ -12,11 +13,9 @@ class Audio {
 
     void init();
     float computeRMS(const std::size_t num_samples) const;
-    void highPassFilter(float *buffer, const std::size_t N,
-                        const float cutoffHz = 20.0f) const;
-    void lowPassFilter(float *buffer, const std::size_t N,
-                       const float cutoffHz = 8000.0f) const;
-    void applyHannWindow(float *buffer, const std::size_t N) const;
+    void hpf(float *buffer, const std::size_t N, const float cutoffHz = 20.0f) const;
+    void lpf(float *buffer, const std::size_t N, const float cutoffHz = 8000.0f) const;
+    void hann(float *buffer, const std::size_t N) const;
     std::pair<std::size_t, const float *> readSamples() const;
 
   private:
@@ -26,4 +25,6 @@ class Audio {
     uint32_t sample_rate_;
     int32_t *data_buffer_;
     float *dsp_buffer_;
+    float dt;
+    static constexpr float TAU = 2.0f * M_PIf32;
 };

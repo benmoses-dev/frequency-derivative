@@ -11,7 +11,7 @@ void FTransform::radix2Pad(std::vector<std::complex<float>> &in) const {
         }
         const std::size_t diff = p - N;
         for (std::size_t i = 0; i < diff; i++) {
-            in.push_back({0.0, 0.0});
+            in.emplace_back(0.0, 0.0);
         }
     }
 }

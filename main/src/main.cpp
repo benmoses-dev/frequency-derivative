@@ -33,8 +33,8 @@ extern "C" void app_main() {
             }
         }
 
-        const float binHZ = SAMPLE_RATE / static_cast<float>(N);
-        const float dominantFreq = maxIndex * binHZ;
+        const float binHz = SAMPLE_RATE / static_cast<float>(N);
+        const float dominantFreq = maxIndex * binHz;
         ESP_LOGI("FFT", "Dominant frequency: %.1f Hz (mag %.2f)", dominantFreq, maxMag);
         // const double rms = audio.computeRMS(samples);
         // ESP_LOGI("MAIN", "RMS: %.2f", rms);

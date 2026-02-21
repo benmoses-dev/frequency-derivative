@@ -1,12 +1,12 @@
 #pragma once
 
+#include <cmath>
 #include <complex>
 #include <vector>
 
 class FTransform {
   private:
-    static constexpr float PI = 3.14159265358979323846;
-    static constexpr float TAU = 2 * PI;
+    static constexpr float TAU = 2.0f * M_PIf32;
 
     void radix2Pad(std::vector<std::complex<float>> &in) const;
 
