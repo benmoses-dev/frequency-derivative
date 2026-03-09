@@ -16,12 +16,16 @@
     - Spectral centroid, rolloff
     - Zero-crossing rate
 
-### Stage 2 - Anomaly Detection
+### Stage 2 - Visual Feedback
+- Provide visual feedback on spectral features:
+  - Addressable LED ring visualisation based on dominant frequencies or frequency delta
+
+### Stage 3 - Anomaly Detection
 - Detect unusual audio events:
   - Alarms, machinery faults, glass breaking
 - Statistical thresholds or autoencoder-based anomaly detection
 
-### Stage 3 - Edge Audio Classification
+### Stage 4 - Edge Audio Classification
 - Train small ML models for classification on-device
 - Classes could include:
   - Speech, background noise, alarms
