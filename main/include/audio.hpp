@@ -26,5 +26,5 @@ class Audio {
     int32_t *data_buffer_;
     float *dsp_buffer_;
     float dt;
-    static constexpr float TAU = 2.0f * M_PIf32;
+    static constexpr float TAU = 2.0f * M_PI;
 };

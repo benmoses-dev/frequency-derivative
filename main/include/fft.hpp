@@ -6,7 +6,7 @@
 
 class FTransform {
   private:
-    static constexpr float TAU = 2.0f * M_PIf32;
+    static constexpr float TAU = 2.0f * M_PI;
 
     void radix2Pad(std::vector<std::complex<float>> &in) const;
 
