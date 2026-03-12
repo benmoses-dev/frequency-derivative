@@ -14,11 +14,11 @@
     - Dominant frequency - done
     - MFCCs
     - Spectral centroid, rolloff
-    - Zero-crossing rate
 
 ### Stage 2 - Visual Feedback
 - Provide visual feedback on spectral features:
-  - Addressable LED ring visualisation based on dominant frequencies or frequency delta
+  - Addressable LED ring visualisation based on dominant frequencies or frequency delta - Done
+  - Map MFCCs and spectral centroid onto the LED ring
 
 ### Stage 3 - Anomaly Detection
 - Detect unusual audio events:
