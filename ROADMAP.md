@@ -14,7 +14,6 @@
     - Dominant frequency - done
     - MFCCs
     - Spectral centroid, rolloff
-    - Zero-crossing rate
 
 ### Stage 2 - Visual Feedback
 - Provide visual feedback on spectral features:
