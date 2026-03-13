@@ -10,43 +10,27 @@ then mapped to colour on a WS2812B LED ring.
 
 ## DSP Pipeline
 
+```
 INMP441
-
 ↓
-
 High-pass filter (remove DC / rumble)
-
 ↓
-
 Low-pass filter (reduce noise and bandwidth)
-
 ↓
-
 Hann window
-
 ↓
-
 FFT
-
 ↓
-
 Dominant frequency detection
-
 ↓
-
 Logarithmic scaling + gain
-
 ↓
-
 Frequency + amplitude -> HSV colour
-
 ↓
-
 HSV -> RGB
-
 ↓
-
 WS2812B LED output with decay trail
+```
 
 ------------------------------------------------------------------------
 
