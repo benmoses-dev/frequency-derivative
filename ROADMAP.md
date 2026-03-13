@@ -20,17 +20,5 @@
   - Addressable LED ring visualisation based on dominant frequencies or frequency delta - Done
   - Map MFCCs and spectral centroid onto the LED ring
 
-### Stage 3 - Anomaly Detection
-- Detect unusual audio events:
-  - Alarms, machinery faults, glass breaking
-- Statistical thresholds or autoencoder-based anomaly detection
-
-### Stage 4 - Edge Audio Classification
-- Train small ML models for classification on-device
-- Classes could include:
-  - Speech, background noise, alarms
-  - Music, machinery, environmental sounds
-- Integrate with real-time DSP
-
 ---
 
