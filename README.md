@@ -10,10 +10,25 @@ then mapped to colour on a WS2812B LED ring.
 
 ## DSP Pipeline
 
-INMP441 ↓ High-pass filter (remove DC / rumble) ↓
-Low-pass filter (reduce noise and bandwidth) ↓ Hann window ↓ FFT ↓ Dominant
-frequency detection ↓ Logarithmic scaling + gain ↓ Frequency + amplitude → HSV
-colour ↓ HSV → RGB ↓ WS2812B LED output with decay trail
+INMP441
+
+↓ High-pass filter (remove DC / rumble)
+
+↓ Low-pass filter (reduce noise and bandwidth)
+
+↓ Hann window
+
+↓ FFT
+
+↓ Dominant frequency detection
+
+↓ Logarithmic scaling + gain
+
+↓ Frequency + amplitude → HSV colour
+
+↓ HSV → RGB
+
+↓ WS2812B LED output with decay trail
 
 ------------------------------------------------------------------------
 
@@ -32,24 +47,25 @@ frequencies **blue → purple**.
 
 Typical wiring:
 
-  Device        ESP32
-  ------------- -----------------
-  INMP441 SCK   I2S clock
-  INMP441 WS    I2S word select
-  INMP441 SD    I2S data
-  LED DIN       GPIO
-  LED VCC       5V
-  LED GND       GND
+| Device | ESP32 |
+|-------|------|
+| INMP441 SCK | I2S clock |
+| INMP441 WS | I2S word select |
+| INMP441 SD | I2S data |
+| LED DIN | GPIO |
+| LED VCC | 5V |
+| LED GND | GND |
 
 I set the pins as follows (Espressif DevKitC):
-  Device        ESP32
-  ------------- -----------------
-  INMP441 SCK   GPIO 26
-  INMP441 WS    GPIO 25
-  INMP441 SD    GPIO 33
-  LED DIN       GPIO 18
-  LED VCC       5V
-  LED GND       GND
+
+| Device | ESP32 |
+|-------|------|
+| INMP441 SCK | GPIO 26 |
+| INMP441 WS | GPIO 25 |
+| INMP441 SD | GPIO 33 |
+| LED DIN | GPIO 18 |
+| LED VCC | 5V |
+| LED GND | GND |
 
 ------------------------------------------------------------------------
 
@@ -71,13 +87,13 @@ idf.py -p PORT flash monitor
 
 Key parameters are configurable in the code:
 
-  Parameter           Description
-  ------------------- --------------------------------
-  SAMPLE_RATE         I2S sampling rate for the MEMS microphone
-  BUFFER_SIZE         FFT size (higher gives finer resolution but impacts performance)
-  minFreq / maxFreq   Frequency range mapped to LEDs
-  fade                LED decay factor (trail)
-  gain                Magnitude scaling
+| Parameter | Description |
+|-------|------|
+| SAMPLE_RATE | I2S sampling rate for the MEMS microphone |
+| BUFFER_SIZE | FFT size (higher gives finer resolution but impacts performance) |
+| minFreq / maxFreq | Frequency range mapped to LEDs |
+| fade | LED decay factor (trail) |
+| gain | Magnitude scaling |
 
 ------------------------------------------------------------------------
 
