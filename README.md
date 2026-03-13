@@ -12,30 +12,48 @@ then mapped to colour on a WS2812B LED ring.
 
 INMP441
 
-↓ High-pass filter (remove DC / rumble)
+↓
 
-↓ Low-pass filter (reduce noise and bandwidth)
+High-pass filter (remove DC / rumble)
 
-↓ Hann window
+↓
 
-↓ FFT
+Low-pass filter (reduce noise and bandwidth)
 
-↓ Dominant frequency detection
+↓
 
-↓ Logarithmic scaling + gain
+Hann window
 
-↓ Frequency + amplitude → HSV colour
+↓
 
-↓ HSV → RGB
+FFT
 
-↓ WS2812B LED output with decay trail
+↓
+
+Dominant frequency detection
+
+↓
+
+Logarithmic scaling + gain
+
+↓
+
+Frequency + amplitude -> HSV colour
+
+↓
+
+HSV -> RGB
+
+↓
+
+WS2812B LED output with decay trail
 
 ------------------------------------------------------------------------
 
 ## Visualisation
 
 Low frequencies appear **red**, mid frequencies **green**, and higher
-frequencies **blue → purple**.
+frequencies **blue -> purple**.
 
 ------------------------------------------------------------------------
 
