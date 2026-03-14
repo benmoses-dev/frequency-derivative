@@ -7,8 +7,8 @@
 
 class Audio {
   public:
-    Audio(uint32_t bclk_pin, uint32_t ws_pin, uint32_t data_pin,
-          uint32_t sample_rate = 44100);
+    Audio(std::uint32_t bclk_pin, std::uint32_t ws_pin, std::uint32_t data_pin,
+          std::uint32_t sample_rate = 44100);
     ~Audio();
 
     void init();
@@ -19,11 +19,11 @@ class Audio {
     std::pair<std::size_t, const float *> readSamples() const;
 
   private:
-    uint32_t bclk_pin_;
-    uint32_t ws_pin_;
-    uint32_t data_pin_;
-    uint32_t sample_rate_;
-    int32_t *data_buffer_;
+    std::uint32_t bclk_pin_;
+    std::uint32_t ws_pin_;
+    std::uint32_t data_pin_;
+    std::uint32_t sample_rate_;
+    std::int32_t *data_buffer_;
     float *dsp_buffer_;
     float dt;
     static constexpr float TAU = 2.0f * M_PI;
