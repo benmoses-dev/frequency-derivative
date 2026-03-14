@@ -14,8 +14,8 @@
 static const char *TAG = "MAIN";
 static constexpr float maxFreq = 8'000.0f;
 static constexpr float minFreq = 120.0f;
-static constexpr float gain = 0.3f;
-static constexpr float minMag = 0.1f;
+static constexpr float gain = 0.01f;
+static constexpr float minMag = 0.2f;
 
 struct Bin {
     float mag;
@@ -96,8 +96,10 @@ extern "C" void app_main() {
             avgMag = 0.0f;
         }
         float v = std::log1p(avgMag * gain);
-        ESP_LOGI(TAG, "Counted: %d, Spectral centroid: %.2f Hz, avgMag: %.2f, hue: %.2f",
-                 counted, spectralCentroid, avgMag, v);
+        ESP_LOGI(TAG,
+                 "Counted: %d, Spectral centroid: %.2f Hz, avgMag: %.2f, hue: %.2f, "
+                 "value: %.2f",
+                 counted, spectralCentroid, avgMag, t, v);
 
         v = std::fmin(v, 1.0f);
         led.decay();
