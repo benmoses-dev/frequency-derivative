@@ -12,13 +12,14 @@
   - FFT - done
   - Spectral features:
     - Dominant frequency - done
+    - Spectral centroid, rolloff - skipped
+    - Top K weighted average frequency - done
     - MFCCs
-    - Spectral centroid, rolloff
 
 ### Stage 2 - Visual Feedback
 - Provide visual feedback on spectral features:
-  - Addressable LED ring visualisation based on dominant frequencies or frequency delta - Done
-  - Map MFCCs and spectral centroid onto the LED ring
+  - Addressable LED ring visualisation based on dominant frequencies or frequency delta - done
+  - Map MFCCs onto the LED ring
 
 ---
 
