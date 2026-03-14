@@ -15,7 +15,7 @@ static const char *TAG = "MAIN";
 static constexpr float maxFreq = 8'000.0f;
 static constexpr float minFreq = 120.0f;
 static constexpr float gain = 0.01f;
-static constexpr float minMag = 0.2f;
+static constexpr float minMag = 0.4f;
 
 struct Bin {
     float mag;
