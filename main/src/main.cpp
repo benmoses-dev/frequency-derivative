@@ -1,11 +1,9 @@
 #include "audio.hpp"
 #include "esp_log.h"
-#include "esp_timer.h"
 #include "fft.hpp"
 #include "led.hpp"
 #include <algorithm>
 #include <cmath>
-#include <queue>
 
 #define SCK_PIN 26
 #define WS_PIN 25
@@ -46,9 +44,9 @@ extern "C" void app_main() {
         const std::size_t N = spectrum.size();
         const float binHz = SAMPLE_RATE / static_cast<float>(N);
 
-        const std::int64_t start = esp_timer_get_time();
         float maxMag = 0.0f;
-        std::priority_queue<Bin, std::vector<Bin>, std::greater<Bin>> pq;
+        std::vector<Bin> bins;
+        bins.reserve((N / 2) - 2);
         /**
          * Skip DC, Nyquist.
          * Potentially also skip the first frequency bin (experiment).
@@ -63,20 +61,17 @@ extern "C" void app_main() {
              * topK max-heap.
              */
             const float freq = i * binHz;
-            pq.push({mag, freq});
+            bins.emplace_back(mag, freq);
             maxMag = std::max(maxMag, mag);
-            if (pq.size() > topK) {
-                pq.pop();
-            }
         }
+        std::sort(bins.begin(), bins.end());
 
         float weightedSum = 0.0f;
         float normSum = 0.0f;
         float magSum = 0.0f;
         std::int32_t counted = 0;
-        while (!pq.empty()) {
-            const auto [mag, freq] = pq.top();
-            pq.pop();
+        for (std::size_t i = bins.size() - 1; i > bins.size() - topK - 1; i--) {
+            const auto &[mag, freq] = bins[i];
             /**
              * Experiment here - we may not want to normalise.
              * Also play around with the cutoff noise-floor
@@ -90,8 +85,6 @@ extern "C" void app_main() {
             normSum += normMag;
             magSum += mag;
         }
-        const std::int64_t end = esp_timer_get_time();
-        ESP_LOGI(TAG, "Loop took %lld microseconds", end - start);
 
         float avgMag = counted > 0 ? (magSum / static_cast<float>(counted)) : 0.0f;
         const float C = (normSum > 0.0f) ? (weightedSum / normSum) : 0.0f;
