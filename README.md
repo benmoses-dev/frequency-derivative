@@ -3,8 +3,8 @@
 Real-time audio frequency visualiser for ESP32.
 
 Audio from an INMP441 I2S microphone is processed with filtering,
-windowing, and an FFT to determine the dominant frequency, which is
-then mapped to colour on a WS2812B LED ring.
+windowing, and an FFT to determine the dominant frequencies, 
+which are averaged and then mapped to colour on a WS2812B LED ring.
 
 ------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ Hann window
 ↓
 FFT
 ↓
-Dominant frequency detection
+Top K dominant frequency detection
 ↓
 Logarithmic scaling + gain
 ↓
