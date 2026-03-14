@@ -67,9 +67,11 @@ void LEDStrip::decay() {
 }
 
 void LEDStrip::output(const float v, const float t) {
-    idx = (idx + 1) % 24;
+    if (v > 0.0f) {
+        idx = (idx + 1) % 24;
+    }
     toRGB(t, v, red, green, blue);
-    ESP_LOGI(TAG, "Red: %d, Green: %d, Blue: %d", red, green, blue);
+    // ESP_LOGI(TAG, "Red: %d, Green: %d, Blue: %d", red, green, blue);
     buffer[idx].r = red;
     buffer[idx].g = green;
     buffer[idx].b = blue;

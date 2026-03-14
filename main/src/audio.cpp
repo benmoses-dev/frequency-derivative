@@ -116,7 +116,7 @@ void Audio::lpf(float *buffer, const std::size_t N, const float cutoffHz) const 
 void Audio::hann(float *buffer, const std::size_t N) const {
     for (std::size_t i = 0; i < N; i++) {
         const float w = 0.5f * (1.0f - cosf(TAU * i / (N - 1)));
-        buffer[i] *= w;
+        buffer[i] *= (w * 2.0f); // account for amplitude reduction
     }
 }
 
@@ -124,15 +124,16 @@ std::pair<std::size_t, const float *> Audio::readSamples() const {
     if (!data_buffer_ || BUFFER_SIZE == 0) {
         return {0, nullptr};
     }
-    size_t bytesRead = 0;
-    const esp_err_t err = i2s_read(I2S_NUM_0, data_buffer_, BUFFER_SIZE * sizeof(int32_t),
-                                   &bytesRead, portMAX_DELAY);
+    std::size_t bytesRead = 0;
+    const esp_err_t err =
+        i2s_read(I2S_NUM_0, data_buffer_, BUFFER_SIZE * sizeof(std::int32_t), &bytesRead,
+                 portMAX_DELAY);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "I2S read failed: %d", err);
         return {0, nullptr};
     }
-    const std::size_t count = bytesRead / sizeof(int32_t);
-    constexpr float INT24_MAX = 8388608.0f; // 2^23
+    const std::size_t count = bytesRead / sizeof(std::int32_t);
+    constexpr float INT24_MAX = 8388608.0f; // 2^23 to normalise to [-1, 1] for FFT
     for (std::size_t i = 0; i < count; i++) {
         dsp_buffer_[i] = static_cast<float>(data_buffer_[i] >> 8) / INT24_MAX;
     }
