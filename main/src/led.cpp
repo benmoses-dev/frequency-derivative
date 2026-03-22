@@ -52,30 +52,29 @@ void LEDStrip::init() {
     stripConfig.strip_gpio_num = LED_GPIO;
     stripConfig.max_leds = LED_COUNT;
     led_strip_rmt_config_t rmtConfig = {};
-    rmtConfig.resolution_hz = 10'000'000;
+    rmtConfig.resolution_hz = LED_RESOLUTION;
     led_strip_new_rmt_device(&stripConfig, &rmtConfig, &ledStrip);
     led_strip_clear(ledStrip);
 }
 
-void LEDStrip::decay() {
+void LEDStrip::decay(const float fade) {
     for (int i = 0; i < LED_COUNT; i++) {
-        buffer[i].r = static_cast<std::uint8_t>(buffer[i].r * fade);
-        buffer[i].g = static_cast<std::uint8_t>(buffer[i].g * fade);
-        buffer[i].b = static_cast<std::uint8_t>(buffer[i].b * fade);
-        led_strip_set_pixel(ledStrip, i, buffer[i].r, buffer[i].g, buffer[i].b);
+        buffer[i].value = (buffer[i].value * fade);
+        std::uint8_t r, g, b;
+        toRGB(buffer[i].hue, buffer[i].value, r, g, b);
+        led_strip_set_pixel(ledStrip, i, r, g, b);
     }
 }
 
-void LEDStrip::output(const float v, const float t) {
-    if (v > 0.0f) {
-        idx = (idx + 1) % 24;
+void LEDStrip::output(const float brightness, const float frequency) {
+    if (brightness > 0.0f) {
+        idx = (idx + 1) % LED_COUNT;
     }
-    toRGB(t, v, red, green, blue);
+    buffer[idx].hue = frequency;
+    buffer[idx].value = brightness;
+    toRGB(frequency, brightness, red_, green_, blue_);
     // ESP_LOGI(TAG, "Red: %d, Green: %d, Blue: %d", red, green, blue);
-    buffer[idx].r = red;
-    buffer[idx].g = green;
-    buffer[idx].b = blue;
-    led_strip_set_pixel(ledStrip, idx, red, green, blue);
+    led_strip_set_pixel(ledStrip, idx, red_, green_, blue_);
     led_strip_refresh(ledStrip);
 }
 

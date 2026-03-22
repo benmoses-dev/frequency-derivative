@@ -1,22 +1,19 @@
 #pragma once
 
+#include "config.h"
 #include "led_strip.h"
 #include <cstdint>
 
-#define LED_GPIO 18
-#define LED_COUNT 24
-
 typedef struct {
-    std::uint8_t r;
-    std::uint8_t g;
-    std::uint8_t b;
+    float hue;
+    float value;
 } LED;
 
 class LEDStrip {
   public:
     void init();
-    void decay();
-    void output(const float maxMag, const float t);
+    void decay(const float fade = LED_FADE);
+    void output(const float brightness, const float frequency);
     void clear();
 
   private:
@@ -24,9 +21,8 @@ class LEDStrip {
                std::uint8_t &blue);
     led_strip_handle_t ledStrip;
     LED buffer[LED_COUNT];
-    static constexpr float fade = 0.8f;
     std::uint8_t idx = 0;
-    std::uint8_t red = 0;
-    std::uint8_t green = 0;
-    std::uint8_t blue = 0;
+    std::uint8_t red_ = 0;
+    std::uint8_t green_ = 0;
+    std::uint8_t blue_ = 0;
 };

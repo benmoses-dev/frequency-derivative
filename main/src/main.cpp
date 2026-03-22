@@ -1,21 +1,12 @@
 #include "audio.hpp"
+#include "config.h"
 #include "esp_log.h"
 #include "fft.hpp"
 #include "led.hpp"
 #include <algorithm>
 #include <cmath>
 
-#define SCK_PIN 26
-#define WS_PIN 25
-#define SD_PIN 33
-#define SAMPLE_RATE 44100
-#define topK 3
-
 static const char *TAG = "MAIN";
-static constexpr float maxFreq = 8'000.0f;
-static constexpr float minFreq = 120.0f;
-static constexpr float gain = 0.01f;
-static constexpr float minMag = 0.4f;
 
 struct Bin {
     float mag;
@@ -26,7 +17,7 @@ struct Bin {
 };
 
 extern "C" void app_main() {
-    Audio audio(SCK_PIN, WS_PIN, SD_PIN, SAMPLE_RATE);
+    Audio audio;
     audio.init();
 
     FTransform fft;
@@ -42,7 +33,7 @@ extern "C" void app_main() {
 
         const auto spectrum = fft.fft(buff, count);
         const std::size_t N = spectrum.size();
-        const float binHz = SAMPLE_RATE / static_cast<float>(N);
+        const float binHz = static_cast<float>(SAMPLE_RATE) / static_cast<float>(N);
 
         float maxMag = 0.0f;
         std::vector<Bin> bins;
@@ -70,7 +61,7 @@ extern "C" void app_main() {
         float normSum = 0.0f;
         float magSum = 0.0f;
         std::int32_t counted = 0;
-        for (std::size_t i = bins.size() - 1; i > bins.size() - topK - 1; i--) {
+        for (std::size_t i = bins.size() - 1; i > bins.size() - TOP_K - 1; i--) {
             const auto &[mag, freq] = bins[i];
             /**
              * Experiment here - we may not want to normalise.
@@ -88,21 +79,21 @@ extern "C" void app_main() {
 
         float avgMag = counted > 0 ? (magSum / static_cast<float>(counted)) : 0.0f;
         const float C = (normSum > 0.0f) ? (weightedSum / normSum) : 0.0f;
-        const float spectralCentroid = std::fmax(std::fmin(C, maxFreq), minFreq);
-        const float numerator = std::log(spectralCentroid) - std::log(minFreq);
-        const float denominator = std::log(maxFreq) - std::log(minFreq);
-        const float t = std::fmin(numerator / denominator, 0.99f);
-        if (avgMag < minMag) {
+        const float spectralCentroid = std::fmax(std::fmin(C, MAX_FREQ), MIN_FREQ);
+        const float numerator = std::log(spectralCentroid) - std::log(MIN_FREQ);
+        const float denominator = std::log(MAX_FREQ) - std::log(MIN_FREQ);
+        const float hue = std::fmin(numerator / denominator, 0.95f);
+        if (avgMag < MIN_MAG) {
             avgMag = 0.0f;
         }
-        float v = std::log1p(avgMag * gain);
+        float value = std::log1p(avgMag * GAIN);
         ESP_LOGI(TAG,
                  "Counted: %d, Spectral centroid: %.2f Hz, avgMag: %.2f, hue: %.2f, "
                  "value: %.2f",
-                 counted, spectralCentroid, avgMag, t, v);
+                 counted, spectralCentroid, avgMag, hue, value);
 
-        v = std::fmin(v, 1.0f);
+        value = std::fmin(value, 1.0f);
         led.decay();
-        led.output(v, t);
+        led.output(value, hue);
     }
 }

@@ -3,3 +3,4 @@
 /sdkconfig
 /**/compile_commands.json
 /managed_components/
+/**/config.h

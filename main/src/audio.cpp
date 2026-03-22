@@ -5,20 +5,15 @@
 #include <cmath>
 #include <cstring>
 
-#define BUFFER_SIZE 1024
-
 static const char *TAG = "AUDIO";
 
-Audio::Audio(const uint32_t bclk_pin, const uint32_t ws_pin, const uint32_t data_pin,
-             const uint32_t sample_rate)
-    : bclk_pin_(bclk_pin), ws_pin_(ws_pin), data_pin_(data_pin),
-      sample_rate_(sample_rate) {
-    data_buffer_ =
-        (int32_t *)heap_caps_malloc(BUFFER_SIZE * sizeof(int32_t), MALLOC_CAP_DMA);
+Audio::Audio() {
+    data_buffer_ = (std::int32_t *)heap_caps_malloc(buffer_size_ * sizeof(std::int32_t),
+                                                    MALLOC_CAP_DMA);
     if (!data_buffer_) {
         ESP_LOGE(TAG, "Failed to allocate DMA buffer");
     }
-    dsp_buffer_ = (float *)heap_caps_malloc(BUFFER_SIZE * sizeof(float), MALLOC_CAP_DMA);
+    dsp_buffer_ = (float *)heap_caps_malloc(buffer_size_ * sizeof(float), MALLOC_CAP_DMA);
     if (!dsp_buffer_) {
         ESP_LOGE(TAG, "Failed to allocate DMA float buffer");
     }
@@ -59,7 +54,7 @@ void Audio::init() {
              data_pin_);
 }
 
-float Audio::computeRMS(const size_t numSamples) const {
+float Audio::computeRMS(const std::size_t numSamples) const {
     if (!data_buffer_ || numSamples == 0) {
         return 0.0;
     }
@@ -121,12 +116,12 @@ void Audio::hann(float *buffer, const std::size_t N) const {
 }
 
 std::pair<std::size_t, const float *> Audio::readSamples() const {
-    if (!data_buffer_ || BUFFER_SIZE == 0) {
+    if (!data_buffer_ || buffer_size_ == 0) {
         return {0, nullptr};
     }
     std::size_t bytesRead = 0;
     const esp_err_t err =
-        i2s_read(I2S_NUM_0, data_buffer_, BUFFER_SIZE * sizeof(std::int32_t), &bytesRead,
+        i2s_read(I2S_NUM_0, data_buffer_, buffer_size_ * sizeof(std::int32_t), &bytesRead,
                  portMAX_DELAY);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "I2S read failed: %d", err);
