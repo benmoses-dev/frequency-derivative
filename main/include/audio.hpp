@@ -11,7 +11,7 @@ class Audio {
     Audio();
     ~Audio();
 
-    void init();
+    bool init();
     float computeRMS(const std::size_t num_samples) const;
     void hpf(float *buffer, const std::size_t N, const float cutoffHz = HPF_CUTOFF) const;
     void lpf(float *buffer, const std::size_t N, const float cutoffHz = LPF_CUTOFF) const;

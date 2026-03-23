@@ -47,14 +47,24 @@ void LEDStrip::toRGB(float h, float v, std::uint8_t &red, std::uint8_t &green,
     blue = static_cast<std::uint8_t>(b * 255.0f);
 }
 
-void LEDStrip::init() {
+bool LEDStrip::init() {
     led_strip_config_t stripConfig = {};
     stripConfig.strip_gpio_num = static_cast<int>(LED_GPIO);
     stripConfig.max_leds = LED_COUNT;
     led_strip_rmt_config_t rmtConfig = {};
     rmtConfig.resolution_hz = LED_RESOLUTION;
-    led_strip_new_rmt_device(&stripConfig, &rmtConfig, &ledStrip);
-    led_strip_clear(ledStrip);
+    esp_err_t err = led_strip_new_rmt_device(&stripConfig, &rmtConfig, &ledStrip);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Error setting rmt device: %d", err);
+        return false;
+    }
+    err = led_strip_clear(ledStrip);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Error clearing LED strip: %d", err);
+        return false;
+    }
+    ESP_LOGI(TAG, "LED strip initialised successfully!");
+    return true;
 }
 
 void LEDStrip::decay(const float fade) {

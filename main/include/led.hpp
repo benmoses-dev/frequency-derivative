@@ -11,7 +11,7 @@ typedef struct {
 
 class LEDStrip {
   public:
-    void init();
+    bool init();
     void decay(const float fade = LED_FADE);
     void output(const float brightness, const float frequency);
     void clear();

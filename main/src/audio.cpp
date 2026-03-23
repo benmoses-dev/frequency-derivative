@@ -22,7 +22,7 @@ Audio::Audio() {
 
 Audio::~Audio() { i2s_driver_uninstall(I2S_NUM_0); }
 
-void Audio::init() {
+bool Audio::init() {
     ESP_LOGI(TAG, "Initialising I2S...");
     const i2s_config_t i2sConfig = {.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX),
                                     .sample_rate = sample_rate_,
@@ -38,10 +38,10 @@ void Audio::init() {
                                     .mclk_multiple = I2S_MCLK_MULTIPLE_128,
                                     .bits_per_chan = I2S_BITS_PER_CHAN_DEFAULT};
 
-    const esp_err_t err = i2s_driver_install(I2S_NUM_0, &i2sConfig, 0, nullptr);
+    esp_err_t err = i2s_driver_install(I2S_NUM_0, &i2sConfig, 0, nullptr);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to install I2S driver: %d", err);
-        return;
+        return false;
     }
     const i2s_pin_config_t pinConfig = {.mck_io_num = I2S_PIN_NO_CHANGE,
                                         .bck_io_num = static_cast<int>(bclk_pin_),
@@ -49,9 +49,14 @@ void Audio::init() {
                                         .data_out_num = I2S_PIN_NO_CHANGE,
                                         .data_in_num = static_cast<int>(data_pin_)};
 
-    i2s_set_pin(I2S_NUM_0, &pinConfig);
+    err = i2s_set_pin(I2S_NUM_0, &pinConfig);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to set I2S pin: %d", err);
+        return false;
+    }
     ESP_LOGI(TAG, "I2S initialised on BCLK=%d LRCLK=%d DATA=%d", bclk_pin_, ws_pin_,
              data_pin_);
+    return true;
 }
 
 float Audio::computeRMS(const std::size_t numSamples) const {

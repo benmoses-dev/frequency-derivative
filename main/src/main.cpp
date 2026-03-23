@@ -18,12 +18,16 @@ struct Bin {
 
 extern "C" void app_main() {
     Audio audio;
-    audio.init();
+    if (!audio.init()) {
+        return;
+    };
 
     FTransform fft;
 
     LEDStrip led;
-    led.init();
+    if (!led.init()) {
+        return;
+    };
 
     while (true) {
         const auto [count, buff] = audio.readSamples();
