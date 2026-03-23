@@ -49,7 +49,7 @@ void LEDStrip::toRGB(float h, float v, std::uint8_t &red, std::uint8_t &green,
 
 void LEDStrip::init() {
     led_strip_config_t stripConfig = {};
-    stripConfig.strip_gpio_num = LED_GPIO;
+    stripConfig.strip_gpio_num = static_cast<int>(LED_GPIO);
     stripConfig.max_leds = LED_COUNT;
     led_strip_rmt_config_t rmtConfig = {};
     rmtConfig.resolution_hz = LED_RESOLUTION;
@@ -58,7 +58,7 @@ void LEDStrip::init() {
 }
 
 void LEDStrip::decay(const float fade) {
-    for (int i = 0; i < LED_COUNT; i++) {
+    for (std::uint32_t i = 0; i < LED_COUNT; i++) {
         buffer[i].value = (buffer[i].value * fade);
         std::uint8_t r, g, b;
         toRGB(buffer[i].hue, buffer[i].value, r, g, b);

@@ -61,7 +61,7 @@ extern "C" void app_main() {
         float normSum = 0.0f;
         float magSum = 0.0f;
         std::int32_t counted = 0;
-        for (std::size_t i = bins.size() - 1; i > bins.size() - TOP_K - 1; i--) {
+        for (std::size_t i = std::max(bins.size() - TOP_K, 0UL); i < bins.size(); i++) {
             const auto &[mag, freq] = bins[i];
             /**
              * Experiment here - we may not want to normalise.
