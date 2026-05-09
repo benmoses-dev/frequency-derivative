@@ -34,10 +34,7 @@ void FTransform::bitReverse(std::vector<std::complex<float>> &in) const {
 std::pair<std::complex<float>, std::complex<float>>
 FTransform::applyTwiddle(const std::complex<float> &even, const std::complex<float> &odd,
                          const std::complex<float> &twiddle) const {
-    const float tempRe = odd.real() * twiddle.real() - odd.imag() * twiddle.imag();
-    const float tempIm = odd.real() * twiddle.imag() + odd.imag() * twiddle.real();
-    return {std::complex<float>(even.real() + tempRe, even.imag() + tempIm),
-            std::complex<float>(even.real() - tempRe, even.imag() - tempIm)};
+    return {even + (odd * twiddle), even - (odd * twiddle)};
 }
 
 void FTransform::fftIt(std::vector<std::complex<float>> &in, const bool inverse) const {
@@ -65,19 +62,10 @@ void FTransform::fftIt(std::vector<std::complex<float>> &in, const bool inverse)
         }
     }
 }
-std::vector<std::complex<float>> FTransform::normalise(const float *in,
-                                                       const std::size_t N) const {
-    std::vector<std::complex<float>> res;
-    res.reserve(N);
-    for (std::size_t i = 0; i < N; i++) {
-        res.emplace_back(in[i], 0.0f);
-    }
-    return res;
-}
 
-std::vector<std::complex<float>> FTransform::fft(const float *input, const std::size_t N,
-                                                 const bool inverse) const {
-    std::vector<std::complex<float>> spectrum = normalise(input, N);
+std::vector<std::complex<float>>
+FTransform::fftInternal(std::vector<std::complex<float>> &spectrum,
+                        const bool inverse) const {
     radix2Pad(spectrum);
     fftIt(spectrum, inverse);
     if (inverse) {
@@ -86,4 +74,17 @@ std::vector<std::complex<float>> FTransform::fft(const float *input, const std::
         }
     }
     return spectrum;
+}
+
+std::vector<std::complex<float>> FTransform::fft(const float *input, const std::size_t N,
+                                                 const bool inverse) const {
+    std::vector<std::complex<float>> spectrum = normalise(input, N);
+    return fftInternal(spectrum, inverse);
+}
+
+std::vector<std::complex<float>> FTransform::fft(const std::complex<float> *input,
+                                                 const std::size_t N,
+                                                 const bool inverse) const {
+    std::vector<std::complex<float>> spectrum = normalise(input, N);
+    return fftInternal(spectrum, inverse);
 }
