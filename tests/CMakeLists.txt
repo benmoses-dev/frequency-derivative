@@ -44,3 +44,12 @@ target_compile_options(fft_bench PRIVATE
 -fno-omit-frame-pointer
 -Wall -Wextra -Wshadow -Wconversion -Wfloat-equal -Wpedantic -Werror=return-type)
 
+add_executable(dsp_test dsp_test.cpp ${MAIN_SRC}/src/dsp.cpp)
+target_include_directories(dsp_test PRIVATE ${MAIN_SRC}/include)
+target_link_libraries(dsp_test PRIVATE GTest::gtest_main)
+gtest_discover_tests(dsp_test)
+target_compile_options(dsp_test PRIVATE 
+-O2 -g3
+-fno-omit-frame-pointer -fsanitize=address,undefined
+-Wall -Wextra -Wshadow -Wconversion -Wfloat-equal -Wpedantic -Werror=return-type)
+target_link_options(dsp_test PRIVATE -fsanitize=address,undefined)

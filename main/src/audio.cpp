@@ -7,7 +7,7 @@
 
 static const char *TAG = "AUDIO";
 
-Audio::Audio() {
+Audio::Audio(const DSP &dsp) : dsp_(dsp) {
     data_buffer_ = (std::int32_t *)heap_caps_malloc(buffer_size_ * sizeof(std::int32_t),
                                                     MALLOC_CAP_DMA);
     if (!data_buffer_) {
@@ -17,7 +17,6 @@ Audio::Audio() {
     if (!dsp_buffer_) {
         ESP_LOGE(TAG, "Failed to allocate DMA float buffer");
     }
-    dt = 1.0f / static_cast<float>(sample_rate_);
 }
 
 Audio::~Audio() { i2s_driver_uninstall(I2S_NUM_0); }
@@ -59,67 +58,6 @@ bool Audio::init() {
     return true;
 }
 
-float Audio::computeRMS(const std::size_t numSamples) const {
-    if (!data_buffer_ || numSamples == 0) {
-        return 0.0;
-    }
-    float sum = 0;
-    for (std::size_t i = 0; i < numSamples; i++) {
-        const float sample = data_buffer_[i] >> 8;
-        sum += sample * sample;
-    }
-    return sqrtf(sum / numSamples);
-}
-
-void Audio::hpf(float *buffer, const std::size_t N, const float cutoffHz) const {
-    if (N == 0) {
-        return;
-    }
-    const float RC = 1.0f / (TAU * cutoffHz);
-    const float alpha = RC / (RC + dt);
-    float prevX = buffer[0];
-    float prevY = 0.0f;
-    for (std::size_t i = 0; i < N; i++) {
-        const float x = buffer[i];
-        const float deltaX = x - prevX;
-        /**
-         * Smoothed derivative to attenuate the low frequency signals
-         */
-        const float y = alpha * (prevY + deltaX);
-        buffer[i] = y;
-        prevX = x;
-        prevY = y;
-    }
-}
-
-void Audio::lpf(float *buffer, const std::size_t N, const float cutoffHz) const {
-    if (N == 0) {
-        return;
-    }
-    const float RC = 1.0f / (TAU * cutoffHz);
-    const float alpha = dt / (RC + dt);
-    float prevY = buffer[0];
-    for (std::size_t i = 0; i < N; i++) {
-        const float x = buffer[i];
-        /**
-         * Exponential moving average
-         */
-        const float y = alpha * x + (1.0f - alpha) * prevY;
-        buffer[i] = y;
-        prevY = y;
-    }
-}
-
-/**
- * Hann window to taper the signal to reduce spectral leakage before FFT.
- */
-void Audio::hann(float *buffer, const std::size_t N) const {
-    for (std::size_t i = 0; i < N; i++) {
-        const float w = 0.5f * (1.0f - cosf(TAU * i / (N - 1)));
-        buffer[i] *= (w * 2.0f); // account for amplitude reduction
-    }
-}
-
 std::pair<std::size_t, const float *> Audio::readSamples() const {
     if (!data_buffer_ || buffer_size_ == 0) {
         return {0, nullptr};
@@ -137,8 +75,8 @@ std::pair<std::size_t, const float *> Audio::readSamples() const {
     for (std::size_t i = 0; i < count; i++) {
         dsp_buffer_[i] = static_cast<float>(data_buffer_[i] >> 8) / INT24_MAX;
     }
-    hpf(dsp_buffer_, count);
-    lpf(dsp_buffer_, count);
-    hann(dsp_buffer_, count);
+    dsp_.hpf(dsp_buffer_, count);
+    dsp_.lpf(dsp_buffer_, count);
+    dsp_.hann(dsp_buffer_, count);
     return {count, dsp_buffer_};
 }

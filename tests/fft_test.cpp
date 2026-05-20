@@ -1,7 +1,6 @@
+#include "fft.hpp"
 #include <cmath>
 #include <gtest/gtest.h>
-
-#include "fft.hpp"
 
 static constexpr float EPS = 1e-5f;
 static constexpr float PI = M_PI;
