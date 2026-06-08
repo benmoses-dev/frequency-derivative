@@ -68,13 +68,13 @@ DSP::process(const std::vector<std::complex<float>> &spectrum) const {
     return {value, hue};
 }
 
-float DSP::computeRMS(const std::size_t numSamples, std::int32_t *data_buffer_) const {
-    if (!data_buffer_ || numSamples == 0) {
+float DSP::computeRMS(float *buffer, const std::size_t numSamples) const {
+    if (!buffer || numSamples == 0) {
         return 0.0;
     }
     float sum = 0;
     for (std::size_t i = 0; i < numSamples; i++) {
-        const float sample = data_buffer_[i] >> 8;
+        const float sample = buffer[i];
         sum += sample * sample;
     }
     return sqrtf(sum / numSamples);

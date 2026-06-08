@@ -1,0 +1,10 @@
+default:
+    just --list
+
+build:
+    cmake -S . -B build
+    cmake --build build -j
+
+test:
+    just build
+    cd build && ctest --output-on-failure
