@@ -39,11 +39,6 @@ static void bitReverse(std::vector<std::complex<float>> &in) {
         }
     }
 }
-static std::pair<std::complex<float>, std::complex<float>>
-applyTwiddle(const std::complex<float> &even, const std::complex<float> &odd,
-             const std::complex<float> &twiddle) {
-    return {even + (odd * twiddle), even - (odd * twiddle)};
-}
 
 static void fftIt(std::vector<std::complex<float>> &in, const bool inverse) {
     const std::size_t N = in.size();
@@ -51,21 +46,20 @@ static void fftIt(std::vector<std::complex<float>> &in, const bool inverse) {
         return;
     }
     bitReverse(in);
+    std::vector<std::complex<float>> twiddles(N);
     for (std::size_t length = 2; length <= N; length <<= 1) {
         const std::size_t half = length / 2;
-        std::vector<std::complex<float>> twiddles(half);
-        for (std::size_t k = 0; k < half; k++) {
+        for (std::size_t k = 0; k < half; ++k) {
             const float angle = TAU * static_cast<float>(k) / static_cast<float>(length) *
                                 (inverse ? 1 : -1);
             twiddles[k] = {std::cos(angle), std::sin(angle)};
         }
         for (std::size_t i = 0; i < N; i += length) {
-            for (std::size_t k = 0; k < half; k++) {
-                const std::complex<float> &even = in[i + k];
-                const std::complex<float> &odd = in[i + k + half];
-                const auto [first, second] = applyTwiddle(even, odd, twiddles[k]);
-                in[i + k] = first;
-                in[i + k + half] = second;
+            for (std::size_t k = 0; k < half; ++k) {
+                const std::complex<float> even = in[i + k];
+                const std::complex<float> odd = in[i + k + half];
+                in[i + k] = even + (odd * twiddles[k]);
+                in[i + k + half] = even - (odd * twiddles[k]);
             }
         }
     }

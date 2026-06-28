@@ -102,9 +102,17 @@ bool Audio::init() {
         .on_sent = NULL,
         .on_send_q_ovf = NULL,
     };
-    i2s_channel_register_event_callback(rxHandle, &callbacks, NULL);
+    res = i2s_channel_register_event_callback(rxHandle, &callbacks, NULL);
+    if (res != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to register overflow callback: %d", res);
+        return false;
+    }
 
-    i2s_channel_enable(rxHandle);
+    res = i2s_channel_enable(rxHandle);
+    if (res != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to enable channel: %d", res);
+        return false;
+    }
 
     ESP_LOGI(TAG, "I2S initialised on BCLK=%d LRCLK=%d DATA=%d", BCLK_PIN, WS_PIN,
              DATA_PIN);
