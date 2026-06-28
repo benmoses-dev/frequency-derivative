@@ -1,8 +1,16 @@
 #include "fft.hpp"
+#include <cmath>
+
+static constexpr float TAU = 2.0f * static_cast<float>(M_PI);
 
 FTransform::FTransform() {}
 
-void FTransform::radix2Pad(std::vector<std::complex<float>> &in) const {
+/**
+ * We can test the FFT using black box end-to-end tests.
+ * Unit tests don't make as much sense, so we can hide these helper functions inside this
+ * TU.
+ */
+static void radix2Pad(std::vector<std::complex<float>> &in) {
     const std::size_t N = in.size();
     if ((N & (N - 1)) != 0) {
         std::size_t p = 2;
@@ -16,7 +24,7 @@ void FTransform::radix2Pad(std::vector<std::complex<float>> &in) const {
     }
 }
 
-void FTransform::bitReverse(std::vector<std::complex<float>> &in) const {
+static void bitReverse(std::vector<std::complex<float>> &in) {
     const std::size_t N = in.size();
     std::size_t j = 0;
     for (std::size_t i = 1; i < N; i++) {
@@ -31,13 +39,13 @@ void FTransform::bitReverse(std::vector<std::complex<float>> &in) const {
         }
     }
 }
-std::pair<std::complex<float>, std::complex<float>>
-FTransform::applyTwiddle(const std::complex<float> &even, const std::complex<float> &odd,
-                         const std::complex<float> &twiddle) const {
+static std::pair<std::complex<float>, std::complex<float>>
+applyTwiddle(const std::complex<float> &even, const std::complex<float> &odd,
+             const std::complex<float> &twiddle) {
     return {even + (odd * twiddle), even - (odd * twiddle)};
 }
 
-void FTransform::fftIt(std::vector<std::complex<float>> &in, const bool inverse) const {
+static void fftIt(std::vector<std::complex<float>> &in, const bool inverse) {
     const std::size_t N = in.size();
     if (N == 1) {
         return;
@@ -63,9 +71,8 @@ void FTransform::fftIt(std::vector<std::complex<float>> &in, const bool inverse)
     }
 }
 
-std::vector<std::complex<float>>
-FTransform::fftInternal(std::vector<std::complex<float>> &spectrum,
-                        const bool inverse) const {
+static std::vector<std::complex<float>>
+fftInternal(std::vector<std::complex<float>> &spectrum, const bool inverse) {
     radix2Pad(spectrum);
     fftIt(spectrum, inverse);
     if (inverse) {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "config.h"
-#include "driver/i2s.h"
 #include "driver/i2s_types.h"
 #include "dsp.hpp"
 #include <cstddef>

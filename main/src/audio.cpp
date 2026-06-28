@@ -1,7 +1,9 @@
 #include "audio.hpp"
 #include "driver/gpio.h"
 #include "driver/i2s_std.h"
+#include "esp_heap_caps.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
 
 static const char *TAG = "AUDIO";
 

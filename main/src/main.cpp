@@ -1,6 +1,5 @@
 #include "audio.hpp"
 #include "config.h"
-#include "driver/i2s.h"
 #include "driver/i2s_types.h"
 #include "esp_log.h"
 #include "fft.hpp"

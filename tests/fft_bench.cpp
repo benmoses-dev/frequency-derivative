@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-static constexpr float PI = M_PI;
+static constexpr float PI = M_PIf;
 
 static float sink = 0.0f;
 
