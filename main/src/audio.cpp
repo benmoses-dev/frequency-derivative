@@ -1,21 +1,18 @@
 #include "audio.hpp"
-#include "driver/i2s.h"
-#include "driver/i2s_types.h"
 #include "esp_log.h"
-#include <cmath>
-#include <cstring>
 
 static const char *TAG = "AUDIO";
 
-Audio::Audio(const DSP &dsp) : dsp_(dsp) {
-    data_buffer_ = (std::int32_t *)heap_caps_malloc(buffer_size_ * sizeof(std::int32_t),
-                                                    MALLOC_CAP_DMA);
+Audio::Audio(const DSP &dsp, QueueHandle_t &q) : dsp_(dsp), i2s_queue(q) {
+    data_buffer_ = static_cast<std::int32_t *>(
+        heap_caps_malloc(buffer_size_ * sizeof(std::int32_t), MALLOC_CAP_DEFAULT));
     if (!data_buffer_) {
-        ESP_LOGE(TAG, "Failed to allocate DMA buffer");
+        ESP_LOGE(TAG, "Failed to allocate buffer");
     }
-    dsp_buffer_ = (float *)heap_caps_malloc(buffer_size_ * sizeof(float), MALLOC_CAP_DMA);
+    dsp_buffer_ = static_cast<float *>(
+        heap_caps_malloc(buffer_size_ * sizeof(float), MALLOC_CAP_DEFAULT));
     if (!dsp_buffer_) {
-        ESP_LOGE(TAG, "Failed to allocate DMA float buffer");
+        ESP_LOGE(TAG, "Failed to allocate float buffer");
     }
 }
 
@@ -23,21 +20,28 @@ Audio::~Audio() { i2s_driver_uninstall(I2S_NUM_0); }
 
 bool Audio::init() {
     ESP_LOGI(TAG, "Initialising I2S...");
+    /**
+     * Using 4 256 DMA buffers here should be OK, as we are processing at ~10ms but only
+     * filling 1024 samples every ~21ms (with a 48kHz sample rate). The benefit over a
+     * larger buffer is less latency, the drawback is no headroom for overflow.
+     */
+    const int buf_len = buffer_size_ / 4;
+    ESP_LOGI(TAG, "Buffer length: %d", buf_len);
     const i2s_config_t i2sConfig = {.mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX),
                                     .sample_rate = sample_rate_,
                                     .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
                                     .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
                                     .communication_format = I2S_COMM_FORMAT_STAND_I2S,
                                     .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
-                                    .dma_buf_count = 8,
-                                    .dma_buf_len = 256,
+                                    .dma_buf_count = 4,
+                                    .dma_buf_len = buf_len,
                                     .use_apll = true,
                                     .tx_desc_auto_clear = true,
                                     .fixed_mclk = 0,
                                     .mclk_multiple = I2S_MCLK_MULTIPLE_128,
                                     .bits_per_chan = I2S_BITS_PER_CHAN_DEFAULT};
 
-    esp_err_t err = i2s_driver_install(I2S_NUM_0, &i2sConfig, 0, nullptr);
+    esp_err_t err = i2s_driver_install(I2S_NUM_0, &i2sConfig, 10, &i2s_queue);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to install I2S driver: %d", err);
         return false;
@@ -67,7 +71,9 @@ std::pair<std::size_t, const float *> Audio::readSamples() const {
         i2s_read(I2S_NUM_0, data_buffer_, buffer_size_ * sizeof(std::int32_t), &bytesRead,
                  portMAX_DELAY);
     if (err != ESP_OK) {
+#if DEBUG
         ESP_LOGE(TAG, "I2S read failed: %d", err);
+#endif
         return {0, nullptr};
     }
     const std::size_t count = bytesRead / sizeof(std::int32_t);

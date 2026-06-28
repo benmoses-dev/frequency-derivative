@@ -2,13 +2,13 @@
 
 This document summarises the performance of the audio processing loop on the ESP32, including time spent at each stage.
 
-| Stage                         | Time (µs) | % of total loop (~23,000 µs) |
+| Stage                         | Time (µs) | % of total loop |
 |--------------------------------|------------|-----------------------------|
-| Audio read + HPF + LPF + Hann | 12,850     | 56%                        |
-| FFT                            | 6,730      | 29%                        |
-| Top-K processing               | 1,690      | 7%                         |
-| Average calculations / hue     | 570        | 2%                         |
-| Decay                          | 30         | 0%                         |
-| LED output                     | 1,130      | 5%                         |
-| **Total**                      | **23,000** | 100%                       |
+| Audio read | 14,820     | 69%                        |
+| HPF + LPF + Hann | 1,450     | 7%                        |
+| FFT                            | 3,140      | 15%                        |
+| Average calculations / hue     | 830        | 4%                         |
+| LED output                     | 1,100      | 5%                         |
+| **Total**                      | **21,340** | 100%                       |
 
+The processing latency is approximately ~6520µs, giving us ~14,820µs of headroom before the DMA buffers overflow.

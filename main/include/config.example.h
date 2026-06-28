@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#define DEBUG 0
+
 /**
  * Pin configuration
  */

@@ -1,16 +1,20 @@
 #pragma once
 
 #include "config.h"
+#include "driver/i2s.h"
+#include "driver/i2s_types.h"
 #include "dsp.hpp"
-#include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <utility>
 
 class Audio {
   public:
-    Audio(const DSP &dsp);
+    explicit Audio(const DSP &dsp, QueueHandle_t &q);
     ~Audio();
+    Audio(const Audio &) = delete;
+    Audio(const Audio &&) = delete;
+    Audio operator=(const Audio &) = delete;
+    Audio operator=(const Audio &&) = delete;
 
     bool init();
     std::pair<std::size_t, const float *> readSamples() const;
@@ -24,4 +28,5 @@ class Audio {
     std::int32_t *data_buffer_;
     float *dsp_buffer_;
     const DSP &dsp_;
+    QueueHandle_t &i2s_queue;
 };
