@@ -63,7 +63,9 @@ bool LEDStrip::init() {
         ESP_LOGE(TAG, "Error clearing LED strip: %d", err);
         return false;
     }
+#if DEBUG
     ESP_LOGI(TAG, "LED strip initialised successfully!");
+#endif
     return true;
 }
 

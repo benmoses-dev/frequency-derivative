@@ -15,8 +15,7 @@ extern "C" void app_main() {
 
     const DSP dsp(SAMPLE_RATE);
 
-    QueueHandle_t i2s_queue;
-    Audio audio(dsp, i2s_queue);
+    Audio audio(dsp);
     if (!audio.init()) {
         return;
     };
@@ -28,23 +27,7 @@ extern "C" void app_main() {
         return;
     };
 
-    i2s_event_t event;
     while (true) {
-#if DEBUG
-        while (xQueueReceive(i2s_queue, &event, 0) == pdTRUE) {
-            switch (event.type) {
-            case I2S_EVENT_RX_Q_OVF:
-                ESP_LOGE(TAG, "I2S RX overflow");
-                break;
-            case I2S_EVENT_DMA_ERROR:
-                ESP_LOGE(TAG, "I2S DMA error");
-                break;
-            default:
-                break;
-            }
-        }
-#endif
-
         const auto [count, buff] = audio.readSamples();
 
         if (count == 0 || !buff) {
